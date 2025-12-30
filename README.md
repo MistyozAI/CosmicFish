@@ -61,7 +61,7 @@ python quantize.py --bits 4
 
 ## Training Loss
 
-![Training Loss Curve CosmicFish-300M](assets/300M_TL.png)
+![Training Loss Curve CosmicFish-300M](misc/300M_TL.png)
 
 The model shows healthy convergence from ~8.0 to ~2.5 loss over 130k steps with stable training dynamics.
 
