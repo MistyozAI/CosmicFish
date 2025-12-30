@@ -2,6 +2,11 @@
 
 A modern, efficient language model built from scratch with production-ready deployment capabilities. Built at Mistyoz AI.
 
+## Model Files
+CosmicFish 120M - https://huggingface.co/MistyozAI/CosmicFish-120M
+
+CosmicFish 90M - https://huggingface.co/MistyozAI/CosmicFish-90M
+
 ## Overview
 
 CosmicFish is a family of language models featuring modern architectural components and comprehensive training infrastructure. Designed for both research experimentation and mobile deployment.
