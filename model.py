@@ -9,10 +9,10 @@ class CosmicConfig:
 
     def __init__(self,
                  vocab_size=50257,
-                 block_size=512,  # Can be increased in later ones 100% will increase
-                 n_layer=12,
-                 n_head=16, # Deeper model for better understanding
-                 n_embd=704,
+                 block_size=2048,  # 512 if 120M or 90M
+                 n_layer=24, # 12 for 120M & 10 for 90M
+                 n_head=16,
+                 n_embd=960, # 704 for 120M & 640 for 90M
                  bias=True,
                  dropout=0.1,
                  n_query_groups=4,  # For Grouped-Query Attention (GQA)
