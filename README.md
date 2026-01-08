@@ -44,11 +44,8 @@ python chat.py --model_path models/cosmicfish.pt
 # Convert to CoreML (iOS)
 python coreml.py
 
-# Convert to MLX (Apple Silicon)
-python convert.py --format mlx
-
 # Quantize model
-python quantize.py --bits 4
+python quantize.py
 ```
 
 ## Model Specs
