@@ -52,7 +52,7 @@ python quantize.py
 
 | Variant | Parameters | Layers | Heads | Embedding | Context |
 |---------|------------|--------|-------|-----------|---------|
-| CosmicFish-300M | 369M | 24 | 16 | 960 | 2048 |
+| CosmicFish-300M | 369M | 24 | 24 | 960 | 2048 |
 | CosmicFish-120M | 121M | 12 | 16 | 704 | 512 |
 | CosmicFish-90M | 91M | 10 | 16 | 640 | 512 |
 
