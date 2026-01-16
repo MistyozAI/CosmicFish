@@ -28,8 +28,8 @@ import multiprocessing
 from dataclasses import dataclass
 from huggingface_hub import login
 
-# HuggingFace Authentication - Hardcoded as requested
-HF_TOKEN = "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"
+# HuggingFace Authentication
+HF_TOKEN = "HF token goes here..."
 
 # Initialize tokenizer
 tokenizer = tiktoken.get_encoding("gpt2")
