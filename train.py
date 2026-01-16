@@ -20,7 +20,7 @@ import wandb
 from model import CosmicFish, CosmicConfig
 
 # Hardcoded W&B API key
-WANDB_API_KEY = "1f0ae889f79e848c6b0ed9e2c88ceaa16fb771a1"
+WANDB_API_KEY = "API key goes here..."
 
 # ========== Utility functions ==========
 
