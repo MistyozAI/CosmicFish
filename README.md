@@ -58,7 +58,7 @@ python quantize.py
 | CosmicFish-120M | 121M | 12 | 16 | 704 | 512 |
 | CosmicFish-90M | 91M | 10 | 16 | 640 | 512 |
 
-## Training Loss
+## Training Loss (CosmicFish-300M)
 
 ![Training Loss Curve CosmicFish-300M](misc/300M_TL.png)
 
