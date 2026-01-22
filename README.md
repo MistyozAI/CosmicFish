@@ -108,11 +108,11 @@ numpy
 ## Citation
 
 ```bibtex
-@software{cosmicfish2025,
+@software{cosmicFish,
   title={CosmicFish: A Modern Efficient Language Model},
-  author={Akhil},
+  author={Venkat Akhil Lakkapragada},
   organization={Mistyoz AI},
-  year={2025}
+  year={2026}
 }
 ```
 
