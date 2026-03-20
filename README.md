@@ -10,6 +10,7 @@ CosmicFish 120M - https://huggingface.co/MistyozAI/CosmicFish-120M
 CosmicFish 90M - https://huggingface.co/MistyozAI/CosmicFish-90M
 
 CosmicFish 300M Base Model - https://drive.google.com/file/d/1gq10_MSC8tMUejlED2vJv14A-I4EmJtq/view?usp=sharing
+
 CosmicFish 300M PT file - https://drive.google.com/file/d/1fHstX35i7v2uSg8XIqBrq7Y8Te7WopOi/view?usp=sharing
 
 ## Overview
