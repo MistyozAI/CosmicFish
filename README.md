@@ -9,10 +9,6 @@ CosmicFish 120M - https://huggingface.co/MistyozAI/CosmicFish-120M
 
 CosmicFish 90M - https://huggingface.co/MistyozAI/CosmicFish-90M
 
-CosmicFish 300M Base .pt file - https://drive.google.com/file/d/1gq10_MSC8tMUejlED2vJv14A-I4EmJtq/view?usp=sharing
-
-CosmicFish 300M IT .pt file - https://drive.google.com/file/d/1fHstX35i7v2uSg8XIqBrq7Y8Te7WopOi/view?usp=sharing
-
 ## Overview
 
 CosmicFish is a family of language models featuring modern architectural components and comprehensive training infrastructure. Designed for both research experimentation and mobile deployment.
