@@ -8,21 +8,19 @@ import numpy as np
 import logging
 from contextlib import nullcontext
 from ast import literal_eval
-import matplotlib.pyplot as plt  # Added for plotting
+import matplotlib.pyplot as plt
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
-# Add wandb for monitoring
 import wandb
 
 from model import CosmicFish, CosmicConfig
 
-# Hardcoded W&B API key
 WANDB_API_KEY = "API key goes here..."
 
-# ========== Utility functions ==========
+# Utility functions
 
 def set_seed(seed):
     random.seed(seed)
@@ -61,19 +59,19 @@ def setup_wandb():
     try:
         # Login with hardcoded API key
         wandb.login(key=WANDB_API_KEY)
-        logger.info("✅ W&B authentication successful")
+        logger.info("W&B authentication successful")
         return True
     except Exception as e:
-        logger.warning(f"⚠️ W&B authentication failed: {e}")
+        logger.warning(f"W&B authentication failed: {e}")
         logger.warning("Continuing without W&B logging")
         return False
 
 
-# ========== Training parameters ==========
+# Training parameters
 
 out_dir = 'out'
 eval_interval = 500
-log_interval = 1  # Update on every iteration
+log_interval = 1
 eval_iters = 200
 eval_only = False
 always_save_checkpoint = True
@@ -89,11 +87,11 @@ vocab_size = 50257
 dropout = 0.1
 
 # New model parameters for the architectural improvements
-use_rotary = True  # Use rotary positional embeddings
-use_swiglu = True  # Use SwiGLU activation
-use_gqa = True  # Use Grouped-Query Attention
-n_query_groups = 4  # Number of query groups for GQA
-use_qk_norm = False  # Whether to use query-key normalization
+use_rotary = True
+use_swiglu = True
+use_gqa = True
+n_query_groups = 4
+use_qk_norm = False
 
 # Optimizer parameters
 batch_size = 16
@@ -110,31 +108,30 @@ warmup_iters = 3000
 lr_decay_iters = 250000
 min_lr = learning_rate / 10
 
-# Curriculum learning parameters - NEW!
-use_curriculum = True  # Enable curriculum learning
-initial_web_ratio = 0.90  # Start with 90% web content
-final_web_ratio = 0.70   # End with 70% web content
-initial_tech_ratio = 0.10  # Start with 10% technical content
-final_tech_ratio = 0.30   # End with 30% technical content
+# Curriculum learning parameters
+use_curriculum = True
+initial_web_ratio = 0.90
+final_web_ratio = 0.70
+initial_tech_ratio = 0.10
+final_tech_ratio = 0.30
 
-# Dataset hybrid sampling weights - NEW!
+# Dataset hybrid sampling weights
 WEB_WEIGHTS = {
-    'fineweb': 0.40,      # Less than natural 64%
-    'c4': 0.25,           # More than natural 16%
-    'openwebtext': 0.20,  # More than natural 12%
-    'wikipedia': 0.15     # More than natural 8%
+    'fineweb': 0.40,
+    'c4': 0.25,
+    'openwebtext': 0.20,
+    'wikipedia': 0.15
 }
 
 TECH_WEIGHTS = {
-    'codeparrot': 0.40,   # Less than natural 44%
-    'openwebmath': 0.35,  # More than natural 33%
-    'arxiv': 0.25         # More than natural 23%
-}
+    'codeparrot': 0.40,
+    'openwebmath': 0.35,
+    'arxiv': 0.25
 
 # W&B parameters
-use_wandb = True  # Enable W&B logging
-wandb_project = "CosmicFish-300M"  # W&B project name
-wandb_run_name = None  # Will be auto-generated if None
+use_wandb = True
+wandb_project = "CosmicFish-300M"
+wandb_run_name = None
 
 # Data parameters
 gradient_accumulation_steps = 10
@@ -146,7 +143,7 @@ run_name = 'CosmicFish'
 logging_dir = 'logs'
 log_level = 'INFO'
 
-# ========== Process command line arguments ==========
+# Process command line arguments
 
 # Process command line arguments for configuration overrides
 for arg in sys.argv[1:]:
@@ -165,7 +162,7 @@ for arg in sys.argv[1:]:
         key = key[2:]  # remove '--'
         if key in globals():
             try:
-                # attempt to eval it (e.g. if bool, number, etc.)
+                # attempt to eval it
                 attempt = literal_eval(val)
             except (SyntaxError, ValueError):
                 # if that goes wrong, just use the string
@@ -178,18 +175,17 @@ for arg in sys.argv[1:]:
         else:
             raise ValueError(f"Unknown config key: {key}")
 
-# ========== Curriculum Learning Functions ==========
+# Curriculum Learning Functions
 
 def get_curriculum_ratios(iter_num, total_iters):
     """Calculate current web/technical ratios based on training progress"""
     if not use_curriculum:
-        return 0.85, 0.15  # Default ratios if curriculum disabled
+        return 0.85, 0.15
 
     progress = iter_num / total_iters
     web_ratio = initial_web_ratio - (progress * (initial_web_ratio - final_web_ratio))
     tech_ratio = initial_tech_ratio + (progress * (final_tech_ratio - initial_tech_ratio))
 
-    # Ensure ratios sum to 1.0
     total = web_ratio + tech_ratio
     web_ratio /= total
     tech_ratio /= total
@@ -219,12 +215,12 @@ def load_all_datasets():
             }
             train_size = len(datasets[dataset_name]['train'])
             val_size = len(datasets[dataset_name]['val'])
-            logger.info(f"✓ Loaded {dataset_name}: {train_size:,} train tokens, {val_size:,} val tokens")
+            logger.info(f"Loaded {dataset_name}: {train_size:,} train tokens, {val_size:,} val tokens")
         else:
-            logger.warning(f"⚠ Dataset {dataset_name} not found, skipping")
+            logger.warning(f"Dataset {dataset_name} not found, skipping")
 
     if not datasets:
-        logger.error("❌ No datasets found! Please run prepare.py first")
+        logger.error("No datasets found! Please run prepare.py first")
         sys.exit(1)
 
     # Categorize datasets
@@ -277,7 +273,7 @@ def distribute_samples_among_datasets(total_samples, weights, available_datasets
 
 def get_curriculum_batch_distribution(iter_num):
     """FIXED: Calculate curriculum distribution for FULL effective batch size (256 samples)"""
-    effective_batch_size = batch_size * gradient_accumulation_steps  # 16 * 16 = 256
+    effective_batch_size = batch_size * gradient_accumulation_steps
     web_ratio, tech_ratio = get_curriculum_ratios(iter_num, max_iters)
 
     # Calculate total samples for each category over FULL 256 samples
@@ -380,7 +376,7 @@ def get_microbatch_from_distribution(split, microbatch_distribution):
     return x, y
 
 
-# ========== Plotting functions ==========
+# Plotting functions
 
 def create_plot_dir():
     """Create directory for saving plots"""
@@ -413,7 +409,7 @@ def plot_metrics(train_losses, val_losses, perplexities, tokens_trained, iter_nu
     plt.savefig(os.path.join(plot_dir, 'perplexity_vs_tokens.png'))
     plt.close()
 
-    # Training progress plot (percentage complete vs loss)
+    # Training progress plot
     plt.figure(figsize=(10, 6))
     percent_complete = [(i / max_iters) * 100 for i in iter_nums]
     plt.plot(percent_complete, train_losses, label='Train Loss')
@@ -425,7 +421,7 @@ def plot_metrics(train_losses, val_losses, perplexities, tokens_trained, iter_nu
     plt.savefig(os.path.join(plot_dir, 'training_progress.png'))
     plt.close()
 
-# ========== Main training code ==========
+# Main training code
 
 # Set up logging
 logger = get_logger(run_name, log_level, logging_dir)
@@ -439,9 +435,9 @@ if torch.cuda.is_available():
     torch.backends.cudnn.allow_tf32 = True
     torch.backends.cudnn.benchmark = True
     torch.backends.cuda.enable_flash_sdp(True)
-    torch.backends.cuda.enable_math_sdp(False)  # Disable slower fallbacks
+    torch.backends.cuda.enable_math_sdp(False)
     torch.backends.cuda.enable_mem_efficient_sdp(False)
-    logger.info("✅ CUDA performance optimizations enabled")
+    logger.info("CUDA performance optimizations enabled")
 
 # Distributed setup
 ddp = int(os.environ.get('RANK', -1)) != -1
@@ -501,11 +497,11 @@ model.to(device)
 
 # Apply torch.compile for maximum performance
 if hasattr(torch, 'compile'):
-    logger.info("🚀 Applying torch.compile with max-autotune...")
+    logger.info("Applying torch.compile with max-autotune...")
     model = torch.compile(model, mode='max-autotune')
-    logger.info("✅ Torch compile enabled - expect 20-30% speedup!")
+    logger.info("Torch compile enabled - expect 20-30% speedup!")
 else:
-    logger.warning("⚠️ torch.compile not available - update PyTorch for better performance")
+    logger.warning("torch.compile not available - update PyTorch for better performance")
 
 # Wrap model in DDP if using distributed training
 if ddp:
@@ -588,7 +584,7 @@ if use_wandb and master_process:
             tags=["curriculum", "cosmicfish", f"{n_layer}L", f"{n_embd}d", "torch-compile", "optimized"],
             notes=f"OPTIMIZED: Torch compile + CUDA opts + curriculum over full effective batch size ({batch_size * gradient_accumulation_steps} samples)"
         )
-        logger.info(f"🚀 W&B run initialized: {wandb_run_name}")
+        logger.info(f"W&B run initialized: {wandb_run_name}")
 
 # Set up automatic mixed precision (AMP) training
 if device.startswith('cuda'):
@@ -681,14 +677,14 @@ def train():
     tokens_trained = []
     iter_nums = []
 
-    start_time = time.time()  # Start time for overall progress tracking
+    start_time = time.time()
     running_loss = 0
 
-    logger.info(f"🚀 Starting curriculum training:")
-    logger.info(f"📊 Initial ratio: {initial_web_ratio:.1%} web, {initial_tech_ratio:.1%} technical")
-    logger.info(f"📊 Final ratio: {final_web_ratio:.1%} web, {final_tech_ratio:.1%} technical")
-    logger.info(f"📚 Available datasets: {list(datasets.keys())}")
-    logger.info(f"🎯 FIXED: Distribution calculated over full effective batch size ({batch_size * gradient_accumulation_steps} samples)")
+    logger.info(f"Starting curriculum training:")
+    logger.info(f"Initial ratio: {initial_web_ratio:.1%} web, {initial_tech_ratio:.1%} technical")
+    logger.info(f"Final ratio: {final_web_ratio:.1%} web, {final_tech_ratio:.1%} technical")
+    logger.info(f"Available datasets: {list(datasets.keys())}")
+    logger.info(f"Distribution calculated over full effective batch size ({batch_size * gradient_accumulation_steps} samples)")
 
     while True:
         # Update learning rate according to schedule
@@ -696,7 +692,7 @@ def train():
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
 
-        # FIXED: Calculate distribution for FULL effective batch size once per iteration
+        # Calculate distribution for FULL effective batch size once per iteration
         total_distribution, web_ratio, tech_ratio = get_curriculum_batch_distribution(iter_num)
 
         # Split distribution across micro-batches
